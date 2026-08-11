@@ -334,6 +334,17 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
   backdrop-filter:blur(8px);padding:8px 14px;transition:.25s;
 }
 .badge:hover{color:var(--orange);border-color:var(--orange)}
+
+/* ---------- Hex lattice layers (hermes-voice motion graphic) ---------- */
+.hex-layer{
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;opacity:.55;
+}
+section .wrap{position:relative;z-index:2}
+.cta .hex-layer{opacity:.75}
+.panel-body{position:relative;overflow:hidden}
+.panel-body .hex-layer{opacity:.3}
+.panel-body>*:not(.hex-layer){position:relative;z-index:1}
 </style>
 </head>
 <body>
@@ -381,6 +392,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
         <span class="t">THREAD — 001.RUN</span>
       </div>
       <div class="panel-body">
+        <canvas class="hex-layer" id="hex-hero"></canvas>
         <div class="msg-user">Research mRNA delivery, build a landing page, deploy to Vercel</div>
         <div class="msg-ai">
           <span class="lbl">BookiStudios · Planner</span>
@@ -403,6 +415,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
 
 <!-- STUDIO / WHAT PEOPLE BUILD -->
 <section id="studio">
+  <canvas class="hex-layer" id="hex-studio"></canvas>
   <div class="wrap">
     <div class="reveal">
       <div class="sec-label">01 — The Studio</div>
@@ -481,6 +494,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
 
 <!-- BENCHMARKS -->
 <section id="benchmarks">
+  <canvas class="hex-layer" id="hex-bench"></canvas>
   <div class="wrap">
     <div class="reveal">
       <div class="sec-label">03 — Benchmarks</div>
@@ -533,6 +547,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
 <section id="cta" style="padding-top:0">
   <div class="wrap">
     <div class="cta reveal">
+      <canvas class="hex-layer" id="hex-cta"></canvas>
       <div class="spaced">M a k e &nbsp; L i v i n g &nbsp; W e b s i t e s</div>
       <h2>Prompt it.<br/>Watch it <span style="color:var(--orange)">ship</span>.</h2>
       <p>Join the studios already compounding their intelligence. First deploy is on us.</p>
@@ -669,6 +684,178 @@ void main(){
   })();
 })();
 
+/* ============ Hex lattice motion graphic (ported from hermes-voice) ============ */
+function HexLattice(canvas, opts){
+  const ctx = canvas.getContext('2d');
+  const TAU = Math.PI*2, STEP = TAU/6;            // the hex lattice: 60° turns only
+  const P = Object.assign({
+    hue:172, hueSpread:24, count:36, step:12, flow:0, reach:12,
+    glow:.4, fade:.07, blur:8, spark:.05, light:55,
+    breathe:true, rings:false, ringEvery:0, core:true
+  }, opts||{});
+  let W=0,H=0,CX=0,CY=0,UNIT=1, breathe=0, tick=0, running=false;
+  const lines=[], rings=[];
+
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    if(!r.width||!r.height) return;
+    const d = Math.min(window.devicePixelRatio||1,2);
+    W=r.width; H=r.height;
+    canvas.width=W*d; canvas.height=H*d;
+    ctx.setTransform(d,0,0,d,0,0);
+    CX=W/2; CY=H/2; UNIT=Math.max(W,H)/46;        // lattice spacing scales to viewport
+  }
+  function lerp(a,b,t){return a+(b-a)*t;}
+
+  /* Particle — one node on the hex lattice, walking outward or inward */
+  function Line(){ this.reset(true); }
+  Line.prototype.reset = function(scatter){
+    if (P.flow < 0){
+      const a = Math.random()*TAU;
+      const r = P.reach * (scatter ? .3+Math.random()*.7 : 1);
+      this.x = Math.cos(a)*r; this.y = Math.sin(a)*r;
+    } else {
+      const a = Math.random()*TAU;
+      const j = scatter ? Math.random()*(P.flow===0 ? P.reach*.8 : 3) : 0;
+      this.x = Math.cos(a)*j; this.y = Math.sin(a)*j;
+    }
+    this.ax=0; this.ay=0;
+    this.rad = Math.floor(Math.random()*6)*STEP;
+    this.lightRate = .012+.022*Math.random();
+    this.hueOffset = (Math.random()-.5)*2;
+    this.age = 0;
+    this.beginPhase();
+  };
+  Line.prototype.beginPhase = function(){
+    this.x += this.ax; this.y += this.ay;
+    this.t = 0;
+    this.target = Math.max(3,(P.step + P.step*.8*Math.random())|0);
+    const rA = this.rad+STEP, rB = this.rad-STEP;
+    const dA = Math.hypot(this.x+Math.cos(rA), this.y+Math.sin(rA));
+    const dB = Math.hypot(this.x+Math.cos(rB), this.y+Math.sin(rB));
+    const outward = dA>dB ? rA : rB, inward = dA>dB ? rB : rA;
+    const bias = .5+.45*P.flow;
+    this.rad = Math.random()<bias ? outward : inward;
+    this.ax = Math.cos(this.rad); this.ay = Math.sin(this.rad);
+    const dist = Math.hypot(this.x,this.y);
+    if (dist > P.reach || (P.flow<0 && dist<.8) || Math.random()<.03) this.reset(false);
+  };
+  Line.prototype.step = function(){
+    this.t++; this.age++;
+    if (this.t >= this.target) this.beginPhase();
+    const prop = this.t/this.target;
+    const wave = Math.sin(prop*Math.PI/2);
+    const px = CX + (this.x + this.ax*wave)*UNIT;
+    const py = CY + (this.y + this.ay*wave)*UNIT;
+    const hue = P.hue + this.hueOffset*P.hueSpread;
+    const li  = P.light + 12*Math.sin(this.age*this.lightRate);
+    const col = 'hsla('+hue.toFixed(0)+',100%,'+li.toFixed(0)+'%,'+P.glow.toFixed(3)+')';
+    ctx.shadowBlur  = prop*P.blur;
+    ctx.shadowColor = col;
+    ctx.fillStyle   = col;
+    ctx.fillRect(px,py,2,2);
+    if (Math.random()<P.spark){
+      ctx.fillRect(px+(Math.random()-.5)*20, py+(Math.random()-.5)*20, 2, 2);
+    }
+  };
+
+  /* Hexagon shockwave rings */
+  function emitRing(strength){
+    rings.push({ r:UNIT*2, a:.5*strength, rot:Math.random()*STEP, v:2.2+strength*5.2 });
+    if (rings.length>8) rings.shift();
+  }
+  function hexPath(cx,cy,r,rot){
+    ctx.beginPath();
+    for (let k=0;k<6;k++){
+      const a = rot+k*STEP;
+      const x = cx+Math.cos(a)*r, y = cy+Math.sin(a)*r;
+      k ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    }
+    ctx.closePath();
+  }
+  function drawRings(){
+    const max = Math.hypot(W,H)*.58;
+    for (let i=rings.length-1;i>=0;i--){
+      const g = rings[i];
+      g.r += g.v; g.a *= .965;
+      if (g.a<.01 || g.r>max){ rings.splice(i,1); continue; }
+      hexPath(CX,CY,g.r,g.rot);
+      const col = 'hsla('+P.hue.toFixed(0)+',100%,66%,'+g.a.toFixed(3)+')';
+      ctx.strokeStyle=col; ctx.shadowColor=col; ctx.shadowBlur=18; ctx.lineWidth=1.2;
+      ctx.stroke();
+    }
+  }
+
+  function drawCore(){
+    const h = P.hue.toFixed(0);
+    const b = P.breathe ? Math.sin(breathe) : 0;
+    const r = UNIT*1.6*(1+.18*b);
+    const g = ctx.createRadialGradient(CX,CY,0,CX,CY,r*3.2);
+    g.addColorStop(0,'hsla('+h+',100%,82%,.28)');
+    g.addColorStop(.35,'hsla('+h+',100%,60%,.1)');
+    g.addColorStop(1,'hsla('+h+',100%,50%,0)');
+    ctx.fillStyle=g; ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(CX,CY,r*3.2,0,TAU); ctx.fill();
+  }
+
+  function frame(){
+    if(!running) return;
+    requestAnimationFrame(frame);
+    tick++;
+    if (P.breathe){
+      breathe += .012;
+      const b = Math.sin(breathe);
+      P.flow  = lerp(P.flow, .5*b, .06);
+      P.reach = lerp(P.reach, P._reach * (1+.3*b), .06);
+      P.glow  = lerp(P.glow, P._glow * (.55+.45*(b*.5+.5)), .06);
+    }
+    // transparent trail fade
+    ctx.globalCompositeOperation='destination-out';
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,'+P.fade.toFixed(3)+')';
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+    if (P.core) drawCore();
+    while (lines.length < P.count) lines.push(new Line());
+    for (let i=0;i<lines.length;i++) lines[i].step();
+    if (P.rings && P.ringEvery && tick % P.ringEvery === 0) emitRing(.45);
+    drawRings();
+    ctx.shadowBlur=0;
+  }
+
+  P._reach = P.reach; P._glow = P.glow;
+
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if (e.isIntersecting && !running){ resize(); running=true; requestAnimationFrame(frame); }
+      else if (!e.isIntersecting) running=false;
+    });
+  },{threshold:0.05});
+  io.observe(canvas);
+  addEventListener('resize', ()=>{ if(running) resize(); });
+
+  return { burst: emitRing };
+}
+
+/* Mount hex lattices across the site */
+(function(){
+  const instances = {};
+  const mounts = {
+    'hex-hero':   { hue:16,  hueSpread:14, count:16, step:10, reach:9,  glow:.5,  fade:.09, blur:7,  spark:.08, core:false },                 // orange, subtle inside thread panel
+    'hex-studio': { hue:200, hueSpread:26, count:26, step:14, reach:13, glow:.3,  fade:.07, blur:8,  spark:.04 },                              // blue drift
+    'hex-bench':  { hue:160, hueSpread:22, count:32, step:12, reach:13, glow:.38, fade:.07, blur:9,  spark:.05 },                              // teal breathe
+    'hex-cta':    { hue:18,  hueSpread:20, count:30, step:10, reach:14, glow:.5,  fade:.06, blur:11, spark:.07, rings:true, ringEvery:210 }    // orange + shockwaves
+  };
+  for (const id in mounts){
+    const c = document.getElementById(id);
+    if (!c) continue;
+    instances[id] = HexLattice(c, mounts[id]);
+    const sec = c.closest('section, .cta, .panel');
+    if (sec) sec.__hex = instances[id];
+  }
+  window.__hexLattices = instances;
+})();
+
 /* ================= Typing effect in hero panel ================= */
 (function(){
   const el=document.getElementById('typing');
@@ -681,10 +868,17 @@ void main(){
   })();
 })();
 
-/* ================= Scroll reveal ================= */
+/* ================= Scroll reveal (+ hex shockwave burst) ================= */
 (function(){
   const io=new IntersectionObserver(es=>{
-    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        const host = e.target.closest('section, .cta, .panel');
+        if (host && host.__hex) host.__hex.burst(.8);
+        io.unobserve(e.target);
+      }
+    });
   },{threshold:0.12});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 })();
