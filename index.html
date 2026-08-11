@@ -205,6 +205,66 @@ section{padding:110px 0;position:relative}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
 .reveal.in{opacity:1;transform:translateY(0)}
 
+/* ---------- Demo video slot ---------- */
+#demo{padding-top:70px}
+.demo-shell{
+  position:relative;margin-top:56px;width:100%;aspect-ratio:16/9;
+  border:1px solid var(--line);background:rgba(12,12,12,.3);overflow:hidden;
+}
+.demo-shell video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.demo-shell .dt{position:absolute;width:16px;height:16px;border:0 solid var(--orange);z-index:3;pointer-events:none;transition:.3s}
+.demo-shell .dt-tl{top:-1px;left:-1px;border-top-width:1px;border-left-width:1px}
+.demo-shell .dt-tr{top:-1px;right:-1px;border-top-width:1px;border-right-width:1px}
+.demo-shell .dt-bl{bottom:-1px;left:-1px;border-bottom-width:1px;border-left-width:1px}
+.demo-shell .dt-br{bottom:-1px;right:-1px;border-bottom-width:1px;border-right-width:1px}
+.demo-shell:hover .dt{width:28px;height:28px}
+.demo-overlay{
+  position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;cursor:pointer;border:0;
+  background:transparent;color:inherit;font-family:inherit;padding:20px;text-align:center;
+  transition:opacity .45s ease;
+}
+.demo-overlay::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.024) 0 1px,transparent 1px 4px);
+}
+.demo-scan{
+  position:absolute;left:0;right:0;top:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,87,26,.55),transparent);
+  animation:demoScan 5s linear infinite;
+}
+@keyframes demoScan{from{top:0}to{top:100%}}
+.demo-hex{
+  position:absolute;top:50%;left:50%;width:min(58%,560px);transform:translate(-50%,-50%);
+  opacity:.09;pointer-events:none;
+}
+.demo-play{
+  position:relative;width:76px;height:76px;border:1px solid var(--orange);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  background:rgba(255,87,26,.06);transition:.25s;
+}
+.demo-play::before{
+  content:"";position:absolute;inset:-1px;border:1px solid var(--orange);border-radius:50%;
+  animation:demoPulse 2.4s ease-out infinite;pointer-events:none;
+}
+@keyframes demoPulse{from{transform:scale(1);opacity:.7}to{transform:scale(1.7);opacity:0}}
+.demo-play svg{width:22px;height:22px;fill:var(--orange);margin-left:3px;transition:.25s}
+.demo-overlay:hover .demo-play{background:var(--orange);transform:scale(1.07)}
+.demo-overlay:hover .demo-play svg{fill:#000}
+.demo-label{
+  font-family:var(--px);font-size:clamp(13px,1.6vw,17px);font-weight:700;
+  letter-spacing:.28em;text-transform:uppercase;color:#fff;
+}
+.demo-note{
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dimmer);line-height:2;
+}
+.demo-note b{color:var(--teal);font-weight:400}
+.demo-shell.is-missing .demo-note b{color:var(--yellow)}
+.demo-shell.is-missing .demo-scan{animation-duration:9s;opacity:.5}
+.demo-shell.is-playing .demo-overlay{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.demo-scan,.demo-play::before{animation:none}}
+
 /* ---------- HydraDB bordered cell grid ---------- */
 .cell-grid{
   display:grid;grid-template-columns:repeat(3,1fr);
@@ -414,6 +474,27 @@ section .wrap{position:relative;z-index:2}
     <span class="ticker-item">Graph Context <i>✦</i> Agent Skills <i>✦</i> Deep Research <i>✦</i> One-Prompt Deploys <i>✦</i> Living Websites <i>✦</i> Shader-Grade Design <i>✦</i> Full-Stack Builds <i>✦</i> Compound Intelligence <i>✦</i></span>
   </div>
 </div>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-label">00 — Demo Reel</div>
+      <h2 class="sec-title">Watch it work.</h2>
+    </div>
+    <div class="demo-shell reveal" id="demo-shell">
+      <video id="demo-video" src="demo.mp4" preload="metadata" playsinline></video>
+      <i class="dt dt-tl"></i><i class="dt dt-tr"></i><i class="dt dt-bl"></i><i class="dt dt-br"></i>
+      <button class="demo-overlay" id="demo-overlay" type="button" aria-label="Play demo video">
+        <svg class="demo-hex" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,2 93.3,26 93.3,74 50,98 6.7,74 6.7,26" fill="none" stroke="#fff" stroke-width=".8"/></svg>
+        <span class="demo-scan"></span>
+        <span class="demo-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.8v16.4c0 .9 1 1.5 1.8 1L21.4 13c.8-.5.8-1.6 0-2.1L7.8 2.9C7 2.4 6 2.9 6 3.8z"/></svg></span>
+        <span class="demo-label">Demo Reel</span>
+        <span class="demo-note" id="demo-note"><b>16:9 slot</b> — drop <b>demo.mp4</b> in the repo root &amp; it wires itself up</span>
+      </button>
+    </div>
+  </div>
+</section>
 
 <!-- STUDIO / WHAT PEOPLE BUILD -->
 <section id="studio">
@@ -684,108 +765,7 @@ void main(){
   })();
 })();
 
-/* ============ Neon hexagon-forming particles — seamless page background ============ */
-/* Adapted from the uploaded pen: same 60°-turn lattice walk, glow trails and
-   sparks — trail fade done via destination-out so it floats transparently
-   over the shader gradient (no box, no edges). Hue drifts inside the site
-   palette band (orange ↔ teal ↔ blue) instead of full rainbow. */
-(function(){
-  const c = document.getElementById('hex-bg');
-  const ctx = c.getContext('2d');
-  const baseRad = Math.PI*2/6;
-  const opts = {
-    len:20, count:110,
-    baseTime:10, addedTime:10,
-    dieChance:.05, spawnChance:1,
-    sparkChance:.12, sparkDist:10, sparkSize:2,
-    baseLight:56, addedLight:10,
-    shadowToTimePropMult:6,
-    baseLightInputMultiplier:.01, addedLightInputMultiplier:.02,
-    cx:0, cy:0,
-    repaintAlpha:.05, hueSpread:36
-  };
-  let w=0,h=0,tick=0,dieX=0,dieY=0,running=true;
-  const lines=[];
-
-  function resize(){
-    const d = Math.min(window.devicePixelRatio||1,2);
-    w = window.innerWidth; h = window.innerHeight;
-    c.width = w*d; c.height = h*d;
-    ctx.setTransform(d,0,0,d,0,0);
-    opts.cx = w/2; opts.cy = h/2;
-    dieX = w/2/opts.len; dieY = h/2/opts.len;
-  }
-  addEventListener('resize', resize); resize();
-
-  // palette-banded hue drift: orange(16) ↔ teal(160) ↔ blue(205)
-  function currentHue(){ return 110 + 95*Math.sin(tick*0.0022); }
-
-  function Line(){ this.reset(true); }
-  Line.prototype.reset = function(scatter){
-    // scatter across the whole field so the pattern fills the viewport
-    // immediately instead of growing from the center
-    this.x = scatter ? (Math.random()*2-1)*dieX*.95 : 0;
-    this.y = scatter ? (Math.random()*2-1)*dieY*.95 : 0;
-    this.addedX=0; this.addedY=0; this.rad=0;
-    this.lightInputMultiplier = opts.baseLightInputMultiplier + opts.addedLightInputMultiplier*Math.random();
-    this.hue = currentHue() + (Math.random()-.5)*opts.hueSpread;
-    this.cumulativeTime = 0;
-    this.beginPhase();
-  };
-  Line.prototype.beginPhase = function(){
-    this.x += this.addedX; this.y += this.addedY;
-    this.time = 0;
-    this.targetTime = (opts.baseTime + opts.addedTime*Math.random())|0;
-    this.rad += baseRad*(Math.random()<.5 ? 1 : -1);
-    this.addedX = Math.cos(this.rad);
-    this.addedY = Math.sin(this.rad);
-    if (Math.random()<opts.dieChance || this.x>dieX || this.x<-dieX || this.y>dieY || this.y<-dieY)
-      this.reset();
-  };
-  Line.prototype.step = function(){
-    ++this.time; ++this.cumulativeTime;
-    if (this.time >= this.targetTime) this.beginPhase();
-    const prop = this.time/this.targetTime;
-    const wave = Math.sin(prop*Math.PI/2);
-    const x = this.addedX*wave, y = this.addedY*wave;
-    const li = opts.baseLight + opts.addedLight*Math.sin(this.cumulativeTime*this.lightInputMultiplier);
-    const col = 'hsl('+this.hue.toFixed(0)+',100%,'+li.toFixed(0)+'%)';
-    ctx.shadowBlur = prop*opts.shadowToTimePropMult;
-    ctx.shadowColor = col;
-    ctx.fillStyle = col;
-    ctx.fillRect(opts.cx+(this.x+x)*opts.len, opts.cy+(this.y+y)*opts.len, 2, 2);
-    if (Math.random()<opts.sparkChance)
-      ctx.fillRect(
-        opts.cx+(this.x+x)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
-        opts.cy+(this.y+y)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
-        opts.sparkSize, opts.sparkSize
-      );
-  };
-
-  function loop(){
-    if (!running) return;
-    requestAnimationFrame(loop);
-    ++tick;
-    ctx.globalCompositeOperation = 'destination-out';   // transparent trail fade
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(0,0,0,'+opts.repaintAlpha+')';
-    ctx.fillRect(0,0,w,h);
-    ctx.globalCompositeOperation = 'lighter';
-    if (lines.length < opts.count && Math.random() < opts.spawnChance)
-      lines.push(new Line());
-    for (let i=0;i<lines.length;i++) lines[i].step();
-    ctx.shadowBlur = 0;
-  }
-  requestAnimationFrame(loop);
-
-  // pause when tab hidden to save cycles
-  document.addEventListener('visibilitychange', ()=>{
-    if (document.hidden){ running=false; }
-    else if (!running){ running=true; requestAnimationFrame(loop); }
-  });
-})();
-
-/* ============ Hex lattice motion graphic (ported from hermes-voice — CTA) ============ */
+/* ============ Hex lattice motion graphic (ported from hermes-voice) ============ */
 function HexLattice(canvas, opts){
   const ctx = canvas.getContext('2d');
   const TAU = Math.PI*2, STEP = TAU/6;            // the hex lattice: 60° turns only
@@ -938,6 +918,107 @@ function HexLattice(canvas, opts){
   return { burst: emitRing };
 }
 
+/* ============ Neon hexagon-forming particles — seamless page background ============ */
+/* Adapted from the uploaded pen: same 60°-turn lattice walk, glow trails and
+   sparks — trail fade done via destination-out so it floats transparently
+   over the shader gradient (no box, no edges). Hue drifts inside the site
+   palette band (orange ↔ teal ↔ blue) instead of full rainbow. */
+(function(){
+  const c = document.getElementById('hex-bg');
+  const ctx = c.getContext('2d');
+  const baseRad = Math.PI*2/6;
+  const opts = {
+    len:20, count:110,
+    baseTime:10, addedTime:10,
+    dieChance:.05, spawnChance:1,
+    sparkChance:.12, sparkDist:10, sparkSize:2,
+    baseLight:56, addedLight:10,
+    shadowToTimePropMult:6,
+    baseLightInputMultiplier:.01, addedLightInputMultiplier:.02,
+    cx:0, cy:0,
+    repaintAlpha:.05, hueSpread:36
+  };
+  let w=0,h=0,tick=0,dieX=0,dieY=0,running=true;
+  const lines=[];
+
+  function resize(){
+    const d = Math.min(window.devicePixelRatio||1,2);
+    w = window.innerWidth; h = window.innerHeight;
+    c.width = w*d; c.height = h*d;
+    ctx.setTransform(d,0,0,d,0,0);
+    opts.cx = w/2; opts.cy = h/2;
+    dieX = w/2/opts.len; dieY = h/2/opts.len;
+  }
+  addEventListener('resize', resize); resize();
+
+  // palette-banded hue drift: orange(16) ↔ teal(160) ↔ blue(205)
+  function currentHue(){ return 110 + 95*Math.sin(tick*0.0022); }
+
+  function Line(){ this.reset(true); }
+  Line.prototype.reset = function(scatter){
+    // scatter across the whole field so the pattern fills the viewport
+    // immediately instead of growing from the center
+    this.x = scatter ? (Math.random()*2-1)*dieX*.95 : 0;
+    this.y = scatter ? (Math.random()*2-1)*dieY*.95 : 0;
+    this.addedX=0; this.addedY=0; this.rad=0;
+    this.lightInputMultiplier = opts.baseLightInputMultiplier + opts.addedLightInputMultiplier*Math.random();
+    this.hue = currentHue() + (Math.random()-.5)*opts.hueSpread;
+    this.cumulativeTime = 0;
+    this.beginPhase();
+  };
+  Line.prototype.beginPhase = function(){
+    this.x += this.addedX; this.y += this.addedY;
+    this.time = 0;
+    this.targetTime = (opts.baseTime + opts.addedTime*Math.random())|0;
+    this.rad += baseRad*(Math.random()<.5 ? 1 : -1);
+    this.addedX = Math.cos(this.rad);
+    this.addedY = Math.sin(this.rad);
+    if (Math.random()<opts.dieChance || this.x>dieX || this.x<-dieX || this.y>dieY || this.y<-dieY)
+      this.reset();
+  };
+  Line.prototype.step = function(){
+    ++this.time; ++this.cumulativeTime;
+    if (this.time >= this.targetTime) this.beginPhase();
+    const prop = this.time/this.targetTime;
+    const wave = Math.sin(prop*Math.PI/2);
+    const x = this.addedX*wave, y = this.addedY*wave;
+    const li = opts.baseLight + opts.addedLight*Math.sin(this.cumulativeTime*this.lightInputMultiplier);
+    const col = 'hsl('+this.hue.toFixed(0)+',100%,'+li.toFixed(0)+'%)';
+    ctx.shadowBlur = prop*opts.shadowToTimePropMult;
+    ctx.shadowColor = col;
+    ctx.fillStyle = col;
+    ctx.fillRect(opts.cx+(this.x+x)*opts.len, opts.cy+(this.y+y)*opts.len, 2, 2);
+    if (Math.random()<opts.sparkChance)
+      ctx.fillRect(
+        opts.cx+(this.x+x)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
+        opts.cy+(this.y+y)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
+        opts.sparkSize, opts.sparkSize
+      );
+  };
+
+  function loop(){
+    if (!running) return;
+    requestAnimationFrame(loop);
+    ++tick;
+    ctx.globalCompositeOperation = 'destination-out';   // transparent trail fade
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,'+opts.repaintAlpha+')';
+    ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation = 'lighter';
+    if (lines.length < opts.count && Math.random() < opts.spawnChance)
+      lines.push(new Line());
+    for (let i=0;i<lines.length;i++) lines[i].step();
+    ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(loop);
+
+  // pause when tab hidden to save cycles
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.hidden){ running=false; }
+    else if (!running){ running=true; requestAnimationFrame(loop); }
+  });
+})();
+
 /* Mount hex lattice — CTA only (hermes-voice shockwave rings) */
 (function(){
   const c = document.getElementById('hex-cta');
@@ -998,6 +1079,39 @@ function HexLattice(canvas, opts){
     });
   },{threshold:0.4});
   document.querySelectorAll('[data-count]').forEach(el=>io.observe(el));
+})();
+
+/* ================= Demo video slot ================= */
+(function(){
+  const shell=document.getElementById('demo-shell'),
+        video=document.getElementById('demo-video'),
+        overlay=document.getElementById('demo-overlay'),
+        note=document.getElementById('demo-note');
+  if(!shell||!video||!overlay||!note)return;
+  const fmt=s=>{s=Math.round(s||0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+  const markReady=()=>{
+    if(shell.classList.contains('has-video'))return;
+    shell.classList.add('has-video');
+    video.controls=true; /* native controls only once a real video is wired */
+    note.innerHTML='<b>ready</b> — press play · '+fmt(video.duration);
+  };
+  video.addEventListener('loadedmetadata',markReady);
+  if(video.readyState>=1)markReady(); /* metadata may arrive before this script runs */
+  const markMissing=()=>{
+    shell.classList.add('is-missing');
+    note.innerHTML='<b>demo.mp4</b> not in the repo yet — upload it next to index.html &amp; refresh';
+  };
+  video.addEventListener('error',markMissing);
+  if(video.error)markMissing(); /* error may fire before this script runs */
+  overlay.addEventListener('click',()=>{
+    const p=video.play();
+    if(p&&p.catch)p.catch(()=>shell.classList.add('is-missing'));
+  });
+  video.addEventListener('play',()=>shell.classList.add('is-playing'));
+  video.addEventListener('ended',()=>{
+    shell.classList.remove('is-playing');
+    note.innerHTML='<b>replay</b> — run it back';
+  });
 })();
 
 /* ================= FAQ accordion ================= */

@@ -7,7 +7,16 @@ The new BookiStudios AI landing page, merged from two source aesthetics:
 
 ## Stack
 
-Single self-contained `index.html` — no build step. Custom GLSL simplex-noise shader on a `<canvas>` (CSS gradient fallback), IntersectionObserver scroll reveals, typing animation in the hero thread panel, count-up stats, seamless marquee ticker, FAQ accordion.
+Single self-contained `index.html` — no build step. Custom GLSL simplex-noise shader on a `<canvas>` (CSS gradient fallback), neon hexagon-forming particles as a seamless full-page background, IntersectionObserver scroll reveals, typing animation in the hero thread panel, count-up stats, seamless marquee ticker, FAQ accordion.
+
+## Demo video
+
+The page ships with a wired 16:9 demo slot (the **“Watch it work.”** section, right after the hero ticker). To light it up, upload a file named exactly **`demo.mp4`** to the repo root, next to `index.html` — no code changes needed:
+
+- **Video present** → the slot detects it, shows the duration, plays on click with native controls.
+- **Video absent** → a branded placeholder card shows instead, so the page never looks broken.
+
+Any H.264/AAC `.mp4` works; 1280×720 or 1920×1080 recommended.
 
 ## Run
 
