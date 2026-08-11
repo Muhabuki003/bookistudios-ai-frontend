@@ -335,22 +335,25 @@ footer{border-top:1px solid var(--line);padding:60px 0 40px;background:rgba(15,1
 }
 .badge:hover{color:var(--orange);border-color:var(--orange)}
 
-/* ---------- Hex lattice layers (hermes-voice motion graphic) ---------- */
+/* ---------- Hex particle background (neon hexagon-forming particles) ---------- */
+#hex-bg{
+  position:fixed;inset:0;width:100vw;height:100vh;
+  z-index:1;pointer-events:none;opacity:.8;
+}
+/* ---------- Hex lattice layer (hermes-voice motion graphic — CTA only) ---------- */
 .hex-layer{
   position:absolute;inset:0;width:100%;height:100%;
   pointer-events:none;opacity:.55;
 }
 section .wrap{position:relative;z-index:2}
 .cta .hex-layer{opacity:.75}
-.panel-body{position:relative;overflow:hidden}
-.panel-body .hex-layer{opacity:.3}
-.panel-body>*:not(.hex-layer){position:relative;z-index:1}
 </style>
 </head>
 <body>
 
 <canvas id="gradient-canvas"></canvas>
 <div class="gradient-veil"></div>
+<canvas id="hex-bg"></canvas>
 <div class="grain"></div>
 
 <nav>
@@ -392,7 +395,6 @@ section .wrap{position:relative;z-index:2}
         <span class="t">THREAD — 001.RUN</span>
       </div>
       <div class="panel-body">
-        <canvas class="hex-layer" id="hex-hero"></canvas>
         <div class="msg-user">Research mRNA delivery, build a landing page, deploy to Vercel</div>
         <div class="msg-ai">
           <span class="lbl">BookiStudios · Planner</span>
@@ -415,7 +417,6 @@ section .wrap{position:relative;z-index:2}
 
 <!-- STUDIO / WHAT PEOPLE BUILD -->
 <section id="studio">
-  <canvas class="hex-layer" id="hex-studio"></canvas>
   <div class="wrap">
     <div class="reveal">
       <div class="sec-label">01 — The Studio</div>
@@ -494,7 +495,6 @@ section .wrap{position:relative;z-index:2}
 
 <!-- BENCHMARKS -->
 <section id="benchmarks">
-  <canvas class="hex-layer" id="hex-bench"></canvas>
   <div class="wrap">
     <div class="reveal">
       <div class="sec-label">03 — Benchmarks</div>
@@ -684,7 +684,108 @@ void main(){
   })();
 })();
 
-/* ============ Hex lattice motion graphic (ported from hermes-voice) ============ */
+/* ============ Neon hexagon-forming particles — seamless page background ============ */
+/* Adapted from the uploaded pen: same 60°-turn lattice walk, glow trails and
+   sparks — trail fade done via destination-out so it floats transparently
+   over the shader gradient (no box, no edges). Hue drifts inside the site
+   palette band (orange ↔ teal ↔ blue) instead of full rainbow. */
+(function(){
+  const c = document.getElementById('hex-bg');
+  const ctx = c.getContext('2d');
+  const baseRad = Math.PI*2/6;
+  const opts = {
+    len:20, count:110,
+    baseTime:10, addedTime:10,
+    dieChance:.05, spawnChance:1,
+    sparkChance:.12, sparkDist:10, sparkSize:2,
+    baseLight:56, addedLight:10,
+    shadowToTimePropMult:6,
+    baseLightInputMultiplier:.01, addedLightInputMultiplier:.02,
+    cx:0, cy:0,
+    repaintAlpha:.05, hueSpread:36
+  };
+  let w=0,h=0,tick=0,dieX=0,dieY=0,running=true;
+  const lines=[];
+
+  function resize(){
+    const d = Math.min(window.devicePixelRatio||1,2);
+    w = window.innerWidth; h = window.innerHeight;
+    c.width = w*d; c.height = h*d;
+    ctx.setTransform(d,0,0,d,0,0);
+    opts.cx = w/2; opts.cy = h/2;
+    dieX = w/2/opts.len; dieY = h/2/opts.len;
+  }
+  addEventListener('resize', resize); resize();
+
+  // palette-banded hue drift: orange(16) ↔ teal(160) ↔ blue(205)
+  function currentHue(){ return 110 + 95*Math.sin(tick*0.0022); }
+
+  function Line(){ this.reset(true); }
+  Line.prototype.reset = function(scatter){
+    // scatter across the whole field so the pattern fills the viewport
+    // immediately instead of growing from the center
+    this.x = scatter ? (Math.random()*2-1)*dieX*.95 : 0;
+    this.y = scatter ? (Math.random()*2-1)*dieY*.95 : 0;
+    this.addedX=0; this.addedY=0; this.rad=0;
+    this.lightInputMultiplier = opts.baseLightInputMultiplier + opts.addedLightInputMultiplier*Math.random();
+    this.hue = currentHue() + (Math.random()-.5)*opts.hueSpread;
+    this.cumulativeTime = 0;
+    this.beginPhase();
+  };
+  Line.prototype.beginPhase = function(){
+    this.x += this.addedX; this.y += this.addedY;
+    this.time = 0;
+    this.targetTime = (opts.baseTime + opts.addedTime*Math.random())|0;
+    this.rad += baseRad*(Math.random()<.5 ? 1 : -1);
+    this.addedX = Math.cos(this.rad);
+    this.addedY = Math.sin(this.rad);
+    if (Math.random()<opts.dieChance || this.x>dieX || this.x<-dieX || this.y>dieY || this.y<-dieY)
+      this.reset();
+  };
+  Line.prototype.step = function(){
+    ++this.time; ++this.cumulativeTime;
+    if (this.time >= this.targetTime) this.beginPhase();
+    const prop = this.time/this.targetTime;
+    const wave = Math.sin(prop*Math.PI/2);
+    const x = this.addedX*wave, y = this.addedY*wave;
+    const li = opts.baseLight + opts.addedLight*Math.sin(this.cumulativeTime*this.lightInputMultiplier);
+    const col = 'hsl('+this.hue.toFixed(0)+',100%,'+li.toFixed(0)+'%)';
+    ctx.shadowBlur = prop*opts.shadowToTimePropMult;
+    ctx.shadowColor = col;
+    ctx.fillStyle = col;
+    ctx.fillRect(opts.cx+(this.x+x)*opts.len, opts.cy+(this.y+y)*opts.len, 2, 2);
+    if (Math.random()<opts.sparkChance)
+      ctx.fillRect(
+        opts.cx+(this.x+x)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
+        opts.cy+(this.y+y)*opts.len + Math.random()*opts.sparkDist*(Math.random()<.5?1:-1) - opts.sparkSize/2,
+        opts.sparkSize, opts.sparkSize
+      );
+  };
+
+  function loop(){
+    if (!running) return;
+    requestAnimationFrame(loop);
+    ++tick;
+    ctx.globalCompositeOperation = 'destination-out';   // transparent trail fade
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,'+opts.repaintAlpha+')';
+    ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation = 'lighter';
+    if (lines.length < opts.count && Math.random() < opts.spawnChance)
+      lines.push(new Line());
+    for (let i=0;i<lines.length;i++) lines[i].step();
+    ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(loop);
+
+  // pause when tab hidden to save cycles
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.hidden){ running=false; }
+    else if (!running){ running=true; requestAnimationFrame(loop); }
+  });
+})();
+
+/* ============ Hex lattice motion graphic (ported from hermes-voice — CTA) ============ */
 function HexLattice(canvas, opts){
   const ctx = canvas.getContext('2d');
   const TAU = Math.PI*2, STEP = TAU/6;            // the hex lattice: 60° turns only
@@ -837,23 +938,13 @@ function HexLattice(canvas, opts){
   return { burst: emitRing };
 }
 
-/* Mount hex lattices across the site */
+/* Mount hex lattice — CTA only (hermes-voice shockwave rings) */
 (function(){
-  const instances = {};
-  const mounts = {
-    'hex-hero':   { hue:16,  hueSpread:14, count:16, step:10, reach:9,  glow:.5,  fade:.09, blur:7,  spark:.08, core:false },                 // orange, subtle inside thread panel
-    'hex-studio': { hue:200, hueSpread:26, count:26, step:14, reach:13, glow:.3,  fade:.07, blur:8,  spark:.04 },                              // blue drift
-    'hex-bench':  { hue:160, hueSpread:22, count:32, step:12, reach:13, glow:.38, fade:.07, blur:9,  spark:.05 },                              // teal breathe
-    'hex-cta':    { hue:18,  hueSpread:20, count:30, step:10, reach:14, glow:.5,  fade:.06, blur:11, spark:.07, rings:true, ringEvery:210 }    // orange + shockwaves
-  };
-  for (const id in mounts){
-    const c = document.getElementById(id);
-    if (!c) continue;
-    instances[id] = HexLattice(c, mounts[id]);
-    const sec = c.closest('section, .cta, .panel');
-    if (sec) sec.__hex = instances[id];
-  }
-  window.__hexLattices = instances;
+  const c = document.getElementById('hex-cta');
+  if (!c) return;
+  const inst = HexLattice(c, { hue:18, hueSpread:20, count:30, step:10, reach:14, glow:.5, fade:.06, blur:11, spark:.07, rings:true, ringEvery:210 });
+  const sec = c.closest('.cta');
+  if (sec) sec.__hex = inst;
 })();
 
 /* ================= Typing effect in hero panel ================= */
